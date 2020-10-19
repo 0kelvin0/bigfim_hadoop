@@ -49,7 +49,7 @@ public class BigFIMDriver extends Configured implements Tool {
 	private static int childJavaOpts;
 	private static long minsup;
 	private static int prefix_length;
-	
+	private static String ncore="3";
 	//Whether to write the actually write the results. If set to false, only the timings will be reported. Default is true.
 		private static boolean write_sets = true;
 
@@ -63,6 +63,12 @@ public class BigFIMDriver extends Configured implements Tool {
 		conf.set("mapreduce.map.java.opts", "-Xmx"+childJavaOpts+"M");
 		conf.set("mapreduce.reduce.java.opts", "-Xmx"+(childJavaOpts*2)+"M");
 		conf.set("mapreduce.textoutputformat.separator", "\t");
+
+		conf.set("yarn.app.mapreduce.am.resource.cpu-vcores",ncore);
+		conf.set("mapreduce.map.cpu.vcores",ncore);
+		conf.set("mapreduce.reduce.cpu.vcores",ncore);
+		conf.set("mapreduce.job.running.map.limit",ncore);
+		conf.set("mapreduce.job.running.reduce.limit",ncore);
 
 		for( int k = 0; k < moreParas.length && moreParas.length >= 2; k+=2) {
 			conf.set( moreParas[ k ], moreParas[ k+1 ] );			
@@ -113,7 +119,6 @@ public class BigFIMDriver extends Configured implements Tool {
 			if (i > 1) {
 				job.addCacheFile(URI.create(cacheFile));
 			}
-			
 			FileInputFormat.addInputPath(job, new Path(inputFile));
 			FileOutputFormat.setOutputPath(job, new Path(outputDir));
 			
@@ -157,10 +162,8 @@ public class BigFIMDriver extends Configured implements Tool {
 		int subDbSize = (int) Math.ceil(1.0 * nrLines / numMappers);
 		conf.setLong(NUMBER_OF_LINES_KEY, nrLines);
 		conf.setInt(SUBDB_SIZE, subDbSize);
-
 		Job job = Job.getInstance(conf, "Create Prefix Groups");
 		job.setJarByClass(BigFIMDriver.class);
-
 		job.addCacheFile(URI.create(cacheFile));
 		
 		job.setMapOutputKeyClass(Text.class);
@@ -195,7 +198,6 @@ public class BigFIMDriver extends Configured implements Tool {
 		String inputFilesDir = outputDir + "/" + "pg" + "/";
 		String outputFile = outputDir + "/" + OFis;
 		System.out.println("[StartMining]: input: " + inputFilesDir + ", output: " + outputFile);
-
 		Job job = Job.getInstance(conf, "Start Mining");
 		job.setJarByClass(BigFIMDriver.class);
 
